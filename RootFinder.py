@@ -26,7 +26,8 @@ def encontrarRaices():
         widget.destroy()
     
     tk.Label(frameContenido, text="", font=("Arial", 12, "bold"), fg="#00008B", bg="whitesmoke").pack()
-    tk.Label(frameContenido, text="CALCULA LA RAÍZ DE UNA ECUACIÓN POLINÓMICA NO LINEAL", font=("Arial", 14, "bold"), fg="#00008B", bg="whitesmoke").pack()
+    tk.Label(frameContenido, text="CALCULA LA RAÍZ DE UNA ECUACIÓN POLINÓMICA NO LINEAL",
+             font=("Arial", 14, "bold"), fg="#00008B", bg="whitesmoke").pack()
     tk.Label(frameContenido, text="", font=("Arial", 12, "bold"), fg="#00008B", bg="whitesmoke").pack()
     tk.Label(frameContenido, text="Ingrese la función f(x):", font=("Arial", 12, "bold"), fg="#00008B", bg="whitesmoke").pack()
 
@@ -135,8 +136,10 @@ def Presentacion():
 
     tk.Label(frameContenido, text="", font=("Arial", 12, "bold"), fg="#00008B", bg="whitesmoke").pack() 
     tk.Label(frameContenido, text="", font=("Arial", 12, "bold"), fg="#00008B", bg="whitesmoke").pack() 
-    tk.Label(frameContenido, text="BIENVENIDOS A LA APLICACIÓN", font=("Comic Sans MS", 14, "bold"), fg="#00008B", bg="whitesmoke").pack()
-    tk.Label(frameContenido, text="RAÍCES DE UNA ECUACIÓN POLINÓMICA NO LINEAL", font=("Arial", 12, "bold"), fg="#00008B", bg="whitesmoke").pack()
+    tk.Label(frameContenido, text="BIENVENIDOS A LA APLICACIÓN", font=("Comic Sans MS", 14, "bold"),
+             fg="#00008B", bg="whitesmoke").pack()
+    tk.Label(frameContenido, text="RAÍCES DE UNA ECUACIÓN POLINÓMICA NO LINEAL",
+             font=("Arial", 12, "bold"), fg="#00008B", bg="whitesmoke").pack()
     tk.Label(frameContenido, text="", font=("Arial", 12, "bold"), fg="#00008B", bg="whitesmoke").pack()
     tk.Label(frameContenido, text="", font=("Arial", 12, "bold"), fg="#00008B", bg="whitesmoke").pack()
 
@@ -152,7 +155,8 @@ def Presentacion():
 
     tk.Label(frameContenido, text="", font=("Arial", 12, "bold"), fg="#00008B", bg="whitesmoke").pack()
     tk.Label(frameContenido, text="", font=("Arial", 12, "bold"), fg="#00008B", bg="whitesmoke").pack()
-    tk.Label(frameContenido, text="RootFinder v1.0", font=("Comic Sans MS", 20, "bold"), fg="#00008B", bg="whitesmoke").pack()
+    tk.Label(frameContenido, text="RootFinder v1.0", font=("Comic Sans MS", 20, "bold"),
+             fg="#00008B", bg="whitesmoke").pack()
 
 def Ayuda():
     limpiarFrame()
@@ -162,12 +166,15 @@ def Ayuda():
     rootLabel.config(text="")
     infoLabel.config(text="")
 
-    tk.Label(frameContenido, text="\n\nINSTRUCCIONES DE USO", bg="whitesmoke", font=("Comic Sans MS", 14,"bold"), fg="#00008B").pack(pady=20)
-    tk.Label(frameContenido, text="RootFinder v1.0:\n\n", bg="whitesmoke", font=("Comic Sans MS", 14,"bold"), fg="#00008B").pack(pady=20)
+    tk.Label(frameContenido, text="\n\nINSTRUCCIONES DE USO", bg="whitesmoke",
+             font=("Comic Sans MS", 14,"bold"), fg="#00008B").pack(pady=20)
+    tk.Label(frameContenido, text="RootFinder v1.0:\n\n", bg="whitesmoke",
+             font=("Comic Sans MS", 14,"bold"), fg="#00008B").pack(pady=20)
     tk.Label(frameContenido, text="\n1. Ingresar la función en el cuadro correspondiente"
              f"\nEjemplos de Funciones validas\nx**3 - 2*x + 1\nsin(x) - x/2\n"
              f"2. Hacer un click en el boton 'Encontrar raíces'"
-             f"\n3. Visualización gráfica\n4. Hacer un click en el botón Borrar gráfico",bg="whitesmoke", font=("Comic Sans MS", 14)).pack(pady=20)
+             f"\n3. Visualización gráfica\n4. Hacer un click en el botón Borrar gráfico",bg="whitesmoke",
+             font=("Comic Sans MS", 14)).pack(pady=20)
 
 def Acercade():
     limpiarFrame()
@@ -191,9 +198,11 @@ def Acercade():
     for texto in textos:
         tk.Label(frameContenido, text=texto, bg="whitesmoke", font=("Comic Sans MS", 14)).pack(pady=4)
 
-    labelAcerca_de = tk.Label(frameContenido, text= "\n\nLanzamiento : 11 de abril  2025", font=("Comic Sans MS", 14),fg="#003366",bg="whitesmoke")
+    labelAcerca_de = tk.Label(frameContenido, text= "\n\nLanzamiento : 20 de abril  2025",
+                              font=("Comic Sans MS", 14),fg="#003366",bg="whitesmoke")
     labelAcerca_de.pack(pady=(1,10))
-    labelAcerca_de = tk.Label(frameContenido, text= "Contacto: lcoyla@unap.edu.pe", font=("Comic Sans MSl", 14),fg="#003366",bg="whitesmoke")
+    labelAcerca_de = tk.Label(frameContenido, text= "Contacto: lcoyla@unap.edu.pe",
+                              font=("Comic Sans MSl", 14),fg="#003366",bg="whitesmoke")
     labelAcerca_de.pack(pady=(1,10))
 
 def crearInterfaz():
