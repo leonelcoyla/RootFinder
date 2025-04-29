@@ -1,5 +1,6 @@
 import tkinter as tk
 import sympy as sp
+import scipy.optimize as opt
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
@@ -26,10 +27,11 @@ def encontrarRaices():
         widget.destroy()
     
     tk.Label(frameContenido, text="", font=("Arial", 12, "bold"), fg="#00008B", bg="whitesmoke").pack()
-    tk.Label(frameContenido, text="CALCULA LA RAÍZ DE UNA ECUACIÓN POLINÓMICA NO LINEAL",
+    tk.Label(frameContenido, text="CALCULA RAÍCES DE FUNCIONES NO LINEALES",
              font=("Arial", 14, "bold"), fg="#00008B", bg="whitesmoke").pack()
     tk.Label(frameContenido, text="", font=("Arial", 12, "bold"), fg="#00008B", bg="whitesmoke").pack()
-    tk.Label(frameContenido, text="Ingrese la función f(x):", font=("Arial", 12, "bold"), fg="#00008B", bg="whitesmoke").pack()
+    tk.Label(frameContenido, text="Ingrese la función f(x):", font=("Arial", 12, "bold"),
+             fg="#00008B", bg="whitesmoke").pack()
 
     entry_function = tk.Entry(frameContenido, font=("Arial", 12), fg="#00008B", bg="whitesmoke")
     entry_function.insert(0, ejemploEcuacion)  # Muestra una ecuación como ejemplo de ingreso
@@ -37,62 +39,105 @@ def encontrarRaices():
     entry_function.bind("<FocusOut>", on_entry_focus_out)
     entry_function.pack()
 
-    def calcular():
+    def newtonRaices():
         try:
-            expr_str = entry_function.get()
+
+            exprCadena = entry_function.get()
             x = sp.symbols('x')
-            expr = sp.sympify(expr_str)
+            expr = sp.sympify(exprCadena)
 
-            f_lambdified = sp.lambdify(x, expr, 'numpy')
+            funcionlamdified = sp.lambdify(x, expr, 'numpy')
+            primerad = sp.lambdify(x, sp.diff(expr, x), 'numpy')  # primera derivada
 
-            x_vals = np.linspace(-10, 10, 400)
-            y_vals = f_lambdified(x_vals)
-
-            roots = []
-            for i in range(len(x_vals) - 1):
-                if y_vals[i] * y_vals[i + 1] < 0:
-                    root_approx = (x_vals[i] + x_vals[i + 1]) / 2
-                    roots.append(root_approx)
-
-            if roots:
-                rootLabel.config(text=f"Raíces encontradas: {', '.join(map(lambda r: f'{r:.4f}', roots))}", font=("Arial", 12, "bold"))
+            # Para detectar logaritmos
+            if 'log' in exprCadena or 'ln' in exprCadena:
+                valoresx = np.linspace(0.01, 2, 10000)
             else:
-                rootLabel.config(text="No se encontraron raíces en el intervalo.")
+                valoresx = np.linspace(-10, 10, 4000)
 
-            funcionPlot(expr, roots)
+            # Evaluacción f(x)
+            valoresy = funcionlamdified(valoresx)
+
+            # Filtrado de valores válidos
+            mascara_valida = np.isfinite(valoresy)
+            valoresx = valoresx[mascara_valida]
+            valoresy = valoresy[mascara_valida]
+
+            ventanas = []
+            for i in range(len(valoresx) - 1):
+                if valoresy[i] == 0:
+                    ventanas.append(valoresx[i])
+                elif valoresy[i] * valoresy[i + 1] < 0:
+                    # Punto inicial o medio como aproximación inicial
+                    x0 = (valoresx[i] + valoresx[i+1]) / 2
+                    try:
+                        raiz = opt.newton(funcionlamdified, x0, fprime=primerad, tol=1e-10, maxiter=50)
+                        ventanas.append(raiz)
+                    except Exception:
+                        # Si Newton falla, usar simplemente el punto medio
+                        ventanas.append(x0)
+
+            # Revisamos el último valor
+            if valoresy[-1] == 0:
+                ventanas.append(valoresx[-1])
+
+            # Eliminar raíces muy cercanas
+            ventanas_filtradas = []
+            tolerancia = 1e-5
+            for r in ventanas:
+                if not any(abs(r - existente) < tolerancia for existente in ventanas_filtradas):
+                    ventanas_filtradas.append(r)
+
+            if ventanas_filtradas:
+                texto_raices = "Raíces encontradas:\n"
+                for idx, raiz in enumerate(ventanas_filtradas, start=1):
+                    texto_raices += f" {raiz:.6f}  "
+
+                ventanaLabel.config(text=texto_raices.strip(), font=("Arial", 12, "bold"))
+              
+            else:
+                ventanaLabel.config(text="No se encontraron raíces")
+
+            muestraPlot(expr, ventanas_filtradas)
 
         except Exception as e:
-            rootLabel.config(text=f"Error: Ingrese la ecuación correctamente", font=("Arial"),fg="red")
+            ventanaLabel.config(text=f"Error: Ingrese la ecuación correctamente", font=("Arial"),fg="red")
 
     def borrarGrafico():
         entry_function.delete(0, tk.END)
-        rootLabel.config(text="")
+        ventanaLabel.config(text="")
         infoLabel.config(text="")
         for widget in canvasFrame.winfo_children():
             widget.destroy()
-    # Botón 1
+
+    # Botón Encontrar raíces
     tk.Button(
-        frameContenido, text="Encontrar Raíces", command=calcular,
+        frameContenido, text="Encontrar Raíces", command=newtonRaices,
         fg="white", bg="orange", font=("Arial", 12, "bold"),
         height=2, width=20
     ).pack(side="left", padx=50, pady = 20)
 
-    # Botón 2
+    # Botón Borrar grafico
     tk.Button(
-        frameContenido, text="Borrar Gráfico", command=borrarGrafico,
+        frameContenido, text="Borrar Grafico", command=borrarGrafico,
         fg="white", bg="orange", font=("Arial", 12, "bold"),
         height=2, width=20
     ).pack(side="left", padx=50, pady = 20)
 
-def funcionPlot(expr, roots):
+def muestraPlot(exprFunc, ventanas):
     x = sp.symbols('x')
-    f_lambdified = sp.lambdify(x, expr, 'numpy')
+    funcionlamdified = sp.lambdify(x, exprFunc, 'numpy')
 
-    x_vals = np.linspace(-10, 10, 400)
-    y_vals = f_lambdified(x_vals)
+    valoresx = np.linspace(-10, 10, 400)
+    valoresx_validos = valoresx[valoresx > 0]    # positivo
+    valoresy = funcionlamdified(valoresx)
 
-    fig, eje = plt.subplots(figsize=(8, 6))
-    eje.plot(x_vals, y_vals, label=f'f(x) = {expr}')
+    fig, eje = plt.subplots(figsize=(10, 8))
+    eje.plot(valoresx, valoresy, label=f'f(x) = {exprFunc}')
+
+    eje.set_xticks(np.arange(-10, 11, 1))
+    eje.set_yticks(np.arange(-10, 11, 1))
+
     # Color de ejes
     eje.axhline(0, color='darkgray', linewidth=1.5)
     eje.axvline(0, color='darkgray', linewidth=1.5)
@@ -106,13 +151,14 @@ def funcionPlot(expr, roots):
     eje.tick_params(axis='x', colors='black')
     eje.tick_params(axis='y', colors='black')
     
-    for root in roots:
-        eje.axvline(root, color='red', linestyle='--')
-        eje.plot(root, 0, 'ro', markersize=8)
+    for ventana in ventanas:
+        eje.axvline(ventana, color='red', linestyle='--')
+        eje.plot(ventana, 0, 'ro', markersize=8)
 
     eje.set_xlim([-10, 10])
     eje.set_ylim([-10, 10])
-    eje.grid(True, linestyle='--', linewidth=1)
+    eje.grid(True, linestyle='-', linewidth=0.5)
+    #eje.grid(True)
     eje.legend()
 
     for widget in canvasFrame.winfo_children():
@@ -127,25 +173,26 @@ def limpiarFrame():
         widget.destroy()
 
 def Presentacion():
+    global frameContenido, ventanaLabel, infoLabel, canvasFrame
     limpiarFrame()
     for widget in canvasFrame.winfo_children():
         widget.destroy()
 
-    rootLabel.config(text="")
+    ventanaLabel.config(text="")
     infoLabel.config(text="")
 
     tk.Label(frameContenido, text="", font=("Arial", 12, "bold"), fg="#00008B", bg="whitesmoke").pack() 
     tk.Label(frameContenido, text="", font=("Arial", 12, "bold"), fg="#00008B", bg="whitesmoke").pack() 
-    tk.Label(frameContenido, text="BIENVENIDOS A LA APLICACIÓN", font=("Comic Sans MS", 14, "bold"),
+    tk.Label(frameContenido, text="BIENVENIDOS A LA APLICACIÓN", font=("Comic Sans MS", 18, "bold"),
              fg="#00008B", bg="whitesmoke").pack()
-    tk.Label(frameContenido, text="RAÍCES DE UNA ECUACIÓN POLINÓMICA NO LINEAL",
-             font=("Arial", 12, "bold"), fg="#00008B", bg="whitesmoke").pack()
+    tk.Label(frameContenido, text="RAÍCES DE FUNCIONES NO LINEALES",
+             font=("Arial", 14, "bold"), fg="#00008B", bg="whitesmoke").pack()
     tk.Label(frameContenido, text="", font=("Arial", 12, "bold"), fg="#00008B", bg="whitesmoke").pack()
     tk.Label(frameContenido, text="", font=("Arial", 12, "bold"), fg="#00008B", bg="whitesmoke").pack()
 
     try:
         image = Image.open("RootFinder.png")  
-        image = image.resize((400, 400))  
+        image = image.resize((550, 400))  
         image_tk = ImageTk.PhotoImage(image)
         imageLabel = tk.Label(frameContenido, image=image_tk, bg="whitesmoke")
         imageLabel.image = image_tk
@@ -163,7 +210,7 @@ def Ayuda():
     for widget in canvasFrame.winfo_children():
         widget.destroy()
         
-    rootLabel.config(text="")
+    ventanaLabel.config(text="")
     infoLabel.config(text="")
 
     tk.Label(frameContenido, text="\n\nINSTRUCCIONES DE USO", bg="whitesmoke",
@@ -181,10 +228,10 @@ def Acercade():
     for widget in canvasFrame.winfo_children():
         widget.destroy()
         
-    rootLabel.config(text="")
+    ventanaLabel.config(text="")
     infoLabel.config(text="")
 
-    tk.Label(frameContenido, text="\n\n\n\nCálculo de racíces de ecuciones no lineales."
+    tk.Label(frameContenido, text="\n\n\n\nCalcula raíces de funciones no lineales."
              f"\nRootFinder v1.0", bg="whitesmoke", font=("Comic Sans MS", 14,"bold"), fg="#00008B").pack(pady=20)
     
     textos = [
@@ -198,37 +245,37 @@ def Acercade():
     for texto in textos:
         tk.Label(frameContenido, text=texto, bg="whitesmoke", font=("Comic Sans MS", 14)).pack(pady=4)
 
-    labelAcerca_de = tk.Label(frameContenido, text= "\n\nLanzamiento : 20 de abril  2025",
+    labelAcercade = tk.Label(frameContenido, text= "\n\nLanzamiento : 29 de abril  2025",
                               font=("Comic Sans MS", 14),fg="#003366",bg="whitesmoke")
-    labelAcerca_de.pack(pady=(1,10))
-    labelAcerca_de = tk.Label(frameContenido, text= "Contacto: lcoyla@unap.edu.pe",
+    labelAcercade.pack(pady=(1,10))
+    labelAcercade = tk.Label(frameContenido, text= "Contacto: lcoyla@unap.edu.pe",
                               font=("Comic Sans MSl", 14),fg="#003366",bg="whitesmoke")
-    labelAcerca_de.pack(pady=(1,10))
+    labelAcercade.pack(pady=(1,10))
 
 def crearInterfaz():
-    global frameContenido, rootLabel, infoLabel, canvasFrame
+    global frameContenido, ventanaLabel, infoLabel, canvasFrame
 
-    root = tk.Tk()
-    root.title("Busca Raíces")
-    root.geometry("900x900")
-    root.config(bg="whitesmoke")
+    ventana = tk.Tk()
+    ventana.title("Busca raíces")
+    ventana.geometry("1000x1000")
+    ventana.config(bg="whitesmoke")
 
-    menuBar = tk.Menu(root)
-    root.config(menu=menuBar)
+    menuBar = tk.Menu(ventana)
+    ventana.config(menu=menuBar)
 
     menuBar.add_command(label="Presentación", command=Presentacion)
     menuBar.add_command(label="Encontrar raíces", command=encontrarRaices)
     menuBar.add_command(label="Ayuda", command=Ayuda)
     menuBar.add_command(label="Acerca de", command=Acercade)
 
-    mainFrame = tk.Frame(root, bg="whitesmoke")
+    mainFrame = tk.Frame(ventana, bg="whitesmoke")
     mainFrame.pack(pady=10)
 
     frameContenido = tk.Frame(mainFrame, bg="whitesmoke")
     frameContenido.pack()
 
-    rootLabel = tk.Label(mainFrame, text="", bg="whitesmoke")
-    rootLabel.pack()
+    ventanaLabel = tk.Label(mainFrame, text="", bg="whitesmoke")
+    ventanaLabel.pack()
 
     infoLabel = tk.Label(mainFrame, text="", fg="blue", bg="whitesmoke")
     infoLabel.pack()
@@ -238,10 +285,10 @@ def crearInterfaz():
     
     encontrarRaices()
 
-    root.mainloop()
+    ventana.mainloop()
 
 def main():
     crearInterfaz()
-
+    
 if __name__ == "__main__":
     main()
