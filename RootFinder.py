@@ -64,41 +64,35 @@ def encontrarRaices():
             valoresy = valoresy[mascara_valida]
 
             ventanas = []
-            for i in range(len(valoresx) - 1):
-                if valoresy[i] == 0:
-                    ventanas.append(valoresx[i])
-                elif valoresy[i] * valoresy[i + 1] < 0:
-                    # Punto inicial o medio como aproximación inicial
-                    x0 = (valoresx[i] + valoresx[i+1]) / 2
+            #*****
+            for x1, x2, y1, y2 in zip(valoresx[:-1], valoresx[1:], valoresy[:-1], valoresy[1:]):
+                if y1 == 0:
+                    ventanas.append(x1)
+                elif y1 * y2 < 0:
+                    x0 = (x1 + x2) / 2
                     try:
                         raiz = opt.newton(funcionlamdified, x0, fprime=primerad, tol=1e-10, maxiter=50)
-                        ventanas.append(raiz)
                     except Exception:
-                        # Si Newton falla, usar simplemente el punto medio
-                        ventanas.append(x0)
+                        raiz = x0  # En caso de error, usar punto medio
+                    ventanas.append(raiz)
 
             # Revisamos el último valor
             if valoresy[-1] == 0:
                 ventanas.append(valoresx[-1])
 
             # Eliminar raíces muy cercanas
-            ventanas_filtradas = []
-            tolerancia = 1e-5
-            for r in ventanas:
-                if not any(abs(r - existente) < tolerancia for existente in ventanas_filtradas):
-                    ventanas_filtradas.append(r)
+            listav= []
+            tol = 1e-5
 
-            if ventanas_filtradas:
-                texto_raices = "Raíces encontradas:\n"
-                for idx, raiz in enumerate(ventanas_filtradas, start=1):
-                    texto_raices += f" {raiz:.6f}  "
+            listav += [r for r in ventanas if not any(abs(r - existente) < tol for existente in listav)]
 
-                ventanaLabel.config(text=texto_raices.strip(), font=("Arial", 12, "bold"))
-              
+            if listav:
+                resultados = " Raíces:\n" + "  ".join(f"{r:.6f}" for r in listav)
+                ventanaLabel.config(text=resultados.strip(), font=("Arial", 12, "bold"))
             else:
-                ventanaLabel.config(text="No se encontraron raíces")
+                ventanaLabel.config(text="No tiene raíces")
 
-            muestraPlot(expr, ventanas_filtradas)
+            muestraPlot(expr, listav)
 
         except Exception as e:
             ventanaLabel.config(text=f"Error: Ingrese la ecuación correctamente", font=("Arial"),fg="red")
@@ -112,14 +106,14 @@ def encontrarRaices():
 
     # Botón Encontrar raíces
     tk.Button(
-        frameContenido, text="Encontrar Raíces", command=newtonRaices,
+        frameContenido, text="Calcular raíces", command=newtonRaices,
         fg="white", bg="orange", font=("Arial", 12, "bold"),
         height=2, width=20
     ).pack(side="left", padx=50, pady = 20)
 
     # Botón Borrar grafico
     tk.Button(
-        frameContenido, text="Borrar Grafico", command=borrarGrafico,
+        frameContenido, text="Borrar gráfico", command=borrarGrafico,
         fg="white", bg="orange", font=("Arial", 12, "bold"),
         height=2, width=20
     ).pack(side="left", padx=50, pady = 20)
@@ -245,7 +239,7 @@ def Acercade():
     for texto in textos:
         tk.Label(frameContenido, text=texto, bg="whitesmoke", font=("Comic Sans MS", 14)).pack(pady=4)
 
-    labelAcercade = tk.Label(frameContenido, text= "\n\nLanzamiento : 29 de abril  2025",
+    labelAcercade = tk.Label(frameContenido, text= "\n\nLanzamiento : 1 de mayo  2025",
                               font=("Comic Sans MS", 14),fg="#003366",bg="whitesmoke")
     labelAcercade.pack(pady=(1,10))
     labelAcercade = tk.Label(frameContenido, text= "Contacto: lcoyla@unap.edu.pe",
